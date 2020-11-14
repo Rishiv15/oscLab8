@@ -44,28 +44,70 @@ COMMIT;
 
 
 CREATE TABLE `Order` (
-  `id` int(8) NOT NULL PRIMARY KEY AUTO_INCREMENT,
-  `p_id` int,
-  FOREIGN KEY (`p_id`) REFERENCES `tblproduct`(`id`),
+  `id` int(8) NOT NULL,
+  `p_id` varchar(255),
+  PRIMARY KEY (`id`, `p_id`),
+  FOREIGN KEY (`p_id`) REFERENCES `tblproduct`(`code`),
   `p_quantity` varchar(255) NOT NULL,
   `p_price` double(10,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+alter table `Order` drop column `p_price`;
+
+set @total_orders = 0;
+
 CREATE TABLE `shipping` (
   `id` int(8) NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `order_id` int,
-  FOREIGN KEY (`order_id`) REFERENCES `Order`(`id`)
+  FOREIGN KEY (`order_id`) REFERENCES `Order`(`id`),
+  `address` VARCHAR(255)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 CREATE TABLE `payment` (
   `id` int(8) NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `order_id` int,
   FOREIGN KEY (`order_id`) REFERENCES `Order`(`id`),
-  `price` double(10,2) NOT NULL
+  `total_price` double(10,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 ALTER TABLE `tblproduct`
   ADD COLUMN `quantity` int default 1000;
-  
+
+SET @total_debit = 0;
+
+delimiter //
+
+  CREATE PROCEDURE reduce_item(IN pcode VARCHAR(255), IN pquantity INT)
+            BEGIN
+            UPDATE `tblproduct` SET `quantity` = `quantity` - pquantity WHERE `code`=pcode;
+            END//
+
+
+
+  CREATE PROCEDURE insert_order(IN ocode INT, IN pcode VARCHAR(255), IN pquantity INT)
+            BEGIN
+            INSERT INTO `Order` VALUES(ocode,pcode,pquantity);
+            END//
+
+  CREATE PROCEDURE insert_shipping(IN ocode INT, IN addres VARCHAR(255))
+            BEGIN
+            INSERT INTO `shipping`(`order_id`, `address`) VALUES(ocode,addres);
+            END//
+
+  CREATE PROCEDURE insert_payment(IN ocode INT, IN total_pquantity INT)
+            BEGIN
+            INSERT INTO `payment`(`order_id`, `total_price`) VALUES(ocode,total_pquantity);
+            END//
+
+delimiter ;
+
+CREATE TRIGGER total_debit_trigger 
+AFTER INSERT 
+ON `payment` 
+FOR EACH ROW 
+SET @total_debit = @total_debit + new.total_price;
+
+
+
 
 

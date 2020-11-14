@@ -83,8 +83,32 @@
 			unset($_SESSION["cart_item"]);
       break;	
       
+      // CREATE TRIGGER on_pay AFTER INSERT ON Order SET @total_debit = @total_debit 
       case "pay":
-         
+         $ship_address = $_POST['address'];
+         $order_id = random_int(0, 10000);
+         foreach($_SESSION["cart_item"] as $k => $v) {
+            $chabby = "call reduce_item('".$_SESSION["cart_item"][$k]["code"]."',".strval($_SESSION["cart_item"][$k]["quantity"]).");";
+            $chabby2 = "call insert_order(".$order_id.",'".$_SESSION["cart_item"][$k]["code"]."',".strval($_SESSION["cart_item"][$k]["quantity"]).");";
+            echo $chabby;
+            echo $chabby2;
+            $db_handle->runQuery($chabby);
+            $db_handle->runQuery($chabby2);
+            // $db_handle->runQuery("call insert_order(1,'ABC',2);");
+         }
+         $item_price = 0;	
+         foreach ($_SESSION["cart_item"] as $item){
+               $item_price += $item["quantity"]*$item["price"];
+         }       
+         $chabby3 = "call insert_shipping(".$order_id.",'".$ship_address."');";
+         $db_handle->runQuery($chabby3);
+         $chabby4 = "call insert_payment(".$order_id.",".$item_price.");";
+         $db_handle->runQuery($chabby4); 
+         echo "\n";
+         $total_debit = $db_handle->runQuery("SELECT @total_debit;");
+         foreach($total_debit as $key=>$value){
+            echo $key;
+         }
       break;
 	}
    }
@@ -165,9 +189,11 @@
 
       <?php
          if(!empty($_SESSION["cart_item"])) {
+            $address = "";
             ?>
             <div class="container">
             <form method="post" action="index.php?action=pay">
+               <input type="text" name="address" placeholder="Enter Address to ship" class="bg-primary">
                <input type="submit" class="bg-primary" value="Pay">
             </form>
             </div>
@@ -189,6 +215,7 @@
                <div class="product-image"><img style="max-width: 180; max-height: 150;" src="<?php echo $product_array[$key]["image"]; ?>"></div>
                <div class="product-tile-footer">
                   <div class="product-title"><?php echo $product_array[$key]["name"]; ?></div>
+                  <div class="product-quantity"><?php echo $product_array[$key]["quantity"]; ?></div>
                   <div class="product-price"><?php echo "$".$product_array[$key]["price"]; ?></div>
                   <div class="cart-action"><input type="submit" value="Add to Cart" class="btnAddAction bg-success" /></div>
                </div>
