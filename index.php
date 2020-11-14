@@ -90,8 +90,6 @@
          foreach($_SESSION["cart_item"] as $k => $v) {
             $chabby = "call reduce_item('".$_SESSION["cart_item"][$k]["code"]."',".strval($_SESSION["cart_item"][$k]["quantity"]).");";
             $chabby2 = "call insert_order(".$order_id.",'".$_SESSION["cart_item"][$k]["code"]."',".strval($_SESSION["cart_item"][$k]["quantity"]).");";
-            echo $chabby;
-            echo $chabby2;
             $db_handle->runQuery($chabby);
             $db_handle->runQuery($chabby2);
             // $db_handle->runQuery("call insert_order(1,'ABC',2);");
@@ -104,11 +102,6 @@
          $db_handle->runQuery($chabby3);
          $chabby4 = "call insert_payment(".$order_id.",".$item_price.");";
          $db_handle->runQuery($chabby4); 
-         echo "\n";
-         $total_debit = $db_handle->runQuery("SELECT @total_debit;");
-         foreach($total_debit as $key=>$value){
-            echo $key;
-         }
       break;
 	}
    }
@@ -117,6 +110,17 @@
    <HEAD>
       <TITLE>Shopping Cart</TITLE>
       <link href="style.css" type="text/css" rel="stylesheet" />
+      <script>
+      function view_total_debit(){
+         var deb = <?php 
+         $total_debit = $db_handle->runQuery("SELECT total_debit FROM total_deb;");
+         foreach($total_debit as $key=>$value){
+            echo $total_debit[$key]["total_debit"];
+         }
+         ?>;
+         alert(deb);  
+      }
+   </script>
    </HEAD>
    <BODY>
       <div id="shopping-cart">
@@ -193,8 +197,8 @@
             ?>
             <div class="container">
             <form method="post" action="index.php?action=pay">
-               <input type="text" name="address" placeholder="Enter Address to ship" class="bg-primary">
-               <input type="submit" class="bg-primary" value="Pay">
+               <input type="text" name="address" placeholder="Enter Address to ship" class="bg-default">
+               <input type="submit" class="bg-default" value="Pay">
             </form>
             </div>
 
@@ -202,6 +206,9 @@
                } 
             ?>
    
+      <button class="btn btn-default"></button>
+
+      <button onclick="view_total_debit()">View Total Debit</button>
 
       <div id="product-grid">
          <div class="txt-heading bg-success text-center">Products</div>

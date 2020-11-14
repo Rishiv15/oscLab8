@@ -99,13 +99,16 @@ delimiter //
             INSERT INTO `payment`(`order_id`, `total_price`) VALUES(ocode,total_pquantity);
             END//
 
+  CREATE TRIGGER total_debit_trigger 
+            AFTER INSERT ON `payment`
+            FOR EACH ROW
+            BEGIN
+            UPDATE total_deb SET total_debit = total_debit + NEW.total_price;
+            END //
+
 delimiter ;
 
-CREATE TRIGGER total_debit_trigger 
-AFTER INSERT 
-ON `payment` 
-FOR EACH ROW 
-SET @total_debit = @total_debit + new.total_price;
+
 
 
 
